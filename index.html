@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title></title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <div class="bitrow" v-for="(bits, r) in table">
+          <div
+            class="bit"
+            v-for="(bit, c) in bits"
+            :class="{on: !!bit, off: !bit}"
+            @click="flip(r, c)"
+          >
+            {{ bit ? "T" : "F" }}
+          </div>
+        </div>
+
+        <div class="codeblock">{{ codeoutput }}</div>
+      </div>
+    </div>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 10em;
+        background: #090c10;
+        color: white;
+        font-family: JetBrains Mono;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .bitrow {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        margin-bottom: 2em;
+      }
+
+      .bit {
+        font-size: 3em;
+        max-width: 200px;
+        padding: 0.5em 0.8em;
+        text-align: center;
+        cursor: pointer;
+      }
+
+      .bit.on {
+        color: #090c10;
+        background: white;
+      }
+
+      .bit.off {
+        color: white;
+        background: #090c10;
+      }
+
+      .codeblock {
+        color: #ffeaa7;
+        white-space: pre;
+        font-size: 1.4em;
+        margin-top: 1em;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+    <script>
+      const processLines = (bitsList) =>
+        bitsList
+          .map((bits) => {
+            const [in1, in2, out1, out2] = bits
+
+            const inBits = `${Number(in1)}${Number(in2)}`
+            const outBits = `${Number(out1)}${Number(out2)}`
+
+            return `    2'b${inBits}: {out1, out2} = 2'b${outBits}`
+          })
+          .join("\n")
+          .trim()
+
+      const process = (bitsList) =>
+        `module A(output out1, out2, input in1, in2);
+always@(in1,in2)
+begin
+  case({in1,in2})
+    ${processLines(bitsList)}
+  endcase
+end
+endmodule
+          `.trim()
+
+      const app = new Vue({
+        el: "#app",
+        data: {
+          table: [
+            [true, false, false, true],
+            [true, true, false, false],
+            [false, false, false, false]
+          ]
+        },
+        computed: {
+          codeoutput() {
+            return process(this.table)
+          }
+        },
+        methods: {
+          flip(r, c) {
+            const t = [...this.table]
+            t[r][c] = !t[r][c]
+
+            this.table = t
+          }
+        }
+      })
+    </script>
+  </body>
+</html>
